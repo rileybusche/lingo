@@ -1,0 +1,17 @@
+{
+  "name": "lingo",
+  "version": "0.1.0",
+  "description": "Spaced-repetition vocab cards while Claude works: the 1,000 most common words of Spanish, French, Italian or Brazilian Portuguese.",
+  "author": {
+    "name": "Riley Busche"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "showOnTurn": {
+      "type": "boolean",
+      "title": "Show on turn",
+      "description": "Start with a card on every turn; the on/off switch in the band or pane (or /lingo off) changes it later",
+      "default": true
+    }
+  }
+}

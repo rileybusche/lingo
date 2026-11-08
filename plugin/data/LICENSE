@@ -1,0 +1,35 @@
+Lingo word decks
+Copyright (c) 2026 Riley Busche
+
+The word decks (data/*/deck.ts) and the data files they are built from (in the
+development repository: scripts/build-deck/<lang>/*.json and
+scripts/build-deck/<lang>/*/*.json) are
+licensed under the Creative Commons Attribution-ShareAlike 4.0 International
+licence (CC BY-SA 4.0):
+
+  https://creativecommons.org/licenses/by-sa/4.0/
+  Full legal code: https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+You may share and adapt them, for any purpose, as long as you credit the
+sources below, link to the licence, say what you changed, and release your
+version under the same licence.
+
+They are adapted from:
+
+  FrequencyWords by Hermit Dave
+  https://github.com/hermitdave/FrequencyWords
+  (content licensed CC BY-SA 4.0; commit 525f9b5, content/2018/<list>/<list>_50k.txt,
+  the list for each language: es, fr, it, and pt_br for Portuguese)
+
+  which is counted from the OpenSubtitles 2018 corpus, http://www.opensubtitles.org/
+  P. Lison and J. Tiedemann, 2016, "OpenSubtitles2016: Extracting Large Parallel
+  Corpora from Movie and TV Subtitles", in Proceedings of the 10th International
+  Conference on Language Resources and Evaluation (LREC 2016).
+
+Changes: word forms grouped into dictionary words, re-ranked by their summed
+counts and cut to the top 1,000; English meanings, part of speech, gender,
+article and one example sentence per word added. The sentences were written fresh; no
+subtitle text is included.
+
+The build scripts and prompts (in the development repository: scripts/build-deck/*.ts,
+scripts/build-deck/prompts/) are code, under the MIT licence in LICENSE.
