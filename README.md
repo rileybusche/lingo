@@ -18,6 +18,23 @@ each language keeps its own words and chunks.
 
 The mod never calls a model. The decks are files in this folder, built once.
 
+## Languages
+
+| Language | Voice that says the word | |
+| --- | --- | --- |
+| Spanish | Paulina (Mexico) or Mónica (Spain) | available |
+| French | Thomas or Jacques (France), or Amélie (Canada) | available |
+| Italian | Alice | available |
+| Portuguese (Brazil) | Luciana (Brazil) or Joana (Portugal) | available |
+| German | | planned |
+| Japanese | | planned |
+| Korean | | planned |
+| Norwegian | | planned |
+
+Switch between them from the ⚙️ Menu (**Language: …**). Each keeps its own words and chunks; XP,
+level, the streak and badges are shared. The voices are macOS's own; if one is not installed, your
+system's voice says the word instead.
+
 ## Installing
 
 At the prompt of a Claude Code terminal session:
