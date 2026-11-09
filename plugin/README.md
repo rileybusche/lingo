@@ -56,6 +56,25 @@ curl -fsSL https://claude.ai/install.sh | bash
 
 Then restart Claude Code and run the line above again.
 
+## Updating
+
+At the Claude Code prompt, one line at a time:
+
+```
+! claude plugin marketplace update lingo
+```
+
+```
+! claude plugin update lingo@lingo
+```
+
+```
+/reload-plugins
+```
+
+The first fetches the latest release, the second installs it, and `/reload-plugins` loads it into
+the session you are in. Your progress is kept.
+
 The first time it opens, it asks which language you want to learn, then whether to start from the
 beginning or take a 20-question placement test that finds where to start.
 
