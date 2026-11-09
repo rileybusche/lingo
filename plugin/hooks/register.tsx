@@ -11,7 +11,7 @@ import { languageOf } from '../src/languages'
 import { advancedChunk, barCells, chunkCount, chunkProgress, neededToAdvance, savedChunk, savedFocus, standing, withChunk, withFocus } from '../src/chunks'
 import { choiceText, promptText, questionFrom } from '../src/picker'
 import { localDayStart, newSince, queueOrder } from '../src/queue'
-import { barSvg, chipSvg } from '../src/bar'
+import { barSvg, blankSvg, chipSvg } from '../src/bar'
 import { CORE_BADGES, chunkBadges, newlyEarned } from '../src/badges'
 import { LIMITS, readSettings, voiceFor, withDefaults, withNextVoice, withNudge, withToggled, withVoice, type SettingKey, type Settings, type Switch } from '../src/settings'
 import { CARD_ROWS, GRID_ROWS, KEPT_ROWS, tipLeft, wrappedLines } from '../src/layout'
@@ -1558,7 +1558,7 @@ function chunksList(
         <Box key="chunk-head" gap={1}>
           <Box key="number-head" width={NUMBER_COLUMNS} flexShrink={0} />
           {Svg !== null
-            ? <Box key="bar-head" flexShrink={1} minWidth={0}><Svg source={`<svg xmlns="http://www.w3.org/2000/svg" width="${BAR_SVG.width}" height="1"/>`} alt="column heads" width={BAR_SVG.width} height={1} /></Box>
+            ? <Box key="bar-head" flexShrink={1} minWidth={0}><Svg source={blankSvg(BAR_SVG.width, 1)} alt="column heads" width={BAR_SVG.width} height={1} /></Box>
             : <Box key="bar-head" width={BAR_CELLS} flexShrink={1} minWidth={0} />}
           <Box key="count-head" width={COUNT_COLUMNS} flexShrink={0} gap={1}>
             <Box key="head-learned" width={COLS.learned} justifyContent="flex-end">

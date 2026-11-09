@@ -49,3 +49,9 @@ export function chipSvg(part: 'learned' | 'seen' | 'rest', size: { width: number
     '</svg>',
   ].join('')
 }
+
+// An empty `width` × `height` SVG: holds the bar's column in a row of heads, so they line up with
+// the bars under them. Built here with the others, so every SVG string is in one place.
+export function blankSvg(width: number, height: number): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"/>`
+}
