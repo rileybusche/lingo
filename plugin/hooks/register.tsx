@@ -1615,7 +1615,7 @@ function chunksList(
                   {bar.rest > 0 && <Box key={`bar-${p.chunk}-rest`} width={bar.rest} />}
                 </Box>
               )}
-              {chunkCount$(Box, Text, p.chunk, p.learned, now.seen[i] ?? 0, p.total, isMine)}
+              {chunkCountCell(Box, Text, p.chunk, p.learned, now.seen[i] ?? 0, p.total, isMine)}
               <Box key={`mark-${p.chunk}`} width={markColumns} flexShrink={0}>
                 <Text color={isMine ? 'claude' : isDone ? 'success' : undefined}>{mark}</Text>
               </Box>
@@ -1688,7 +1688,7 @@ const MODE_TIP = {
 }
 const learnedTip = (toOpen: number) =>
   `A word is learned once you'd likely still recall it a week later. Usually: right when it's new, right again 10 minutes later, then right at its review a couple of days on. A miss sets it back. ${toOpen} learned opens the next chunk.`
-function chunkCount$(
+function chunkCountCell(
   Box: ElementConstructor<BoxProps>,
   Text: ElementConstructor<TextProps>,
   chunk: number,
