@@ -14,7 +14,6 @@ export const PER_ROUND = 4
 export const PASS = 3
 export const SPREAD_DAYS = 21 // the placed words' first reviews, spread over three weeks
 
-export type { Placement } from '../types'
 
 const mid = (lo: number, hi: number) => Math.floor((lo + hi) / 2)
 

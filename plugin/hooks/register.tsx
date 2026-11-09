@@ -3,7 +3,7 @@
 // or a band above the prompt. /lingo opens it any time.
 
 import { atom, read, update } from 'claude-code'
-import type { BoxProps, ButtonProps, ClientProps, ElementConstructor, EngineInterface, Register, SelectProps, SvgProps, TextProps } from 'claude-code'
+import type { BoxProps, ButtonProps, ElementConstructor, EngineInterface, Register, SelectProps, SvgProps, TextProps } from 'claude-code'
 
 import type { Deck } from '../src/deck'
 import { DECKS, deckFor, offered } from '../src/decks'
@@ -24,9 +24,9 @@ import { RUN_FOR_BONUS, type Level, levelOf, localDate, msToMidnight, readDays, 
 import { chimeBase64 } from '../src/chime'
 import { exportText, importWrites, isOurKey } from '../src/transfer'
 import { seeded, shuffled } from '../src/random'
-import { QUESTIONS, SPREAD_DAYS, placedCount, questionNumber, startPlacement, withPlacement, withPlacementAnswer, type Placement } from '../src/placement'
+import { QUESTIONS, SPREAD_DAYS, placedCount, questionNumber, startPlacement, withPlacement, withPlacementAnswer } from '../src/placement'
 import { verdictText } from '../src/verdict'
-import type { LingoCards, LingoDrill, LingoFeedback, LingoFlash, LingoFlashcard, LingoPaneScreen, LingoPlacement, LingoQuestion, LingoView, LingoWelcome } from '../types'
+import type { LingoCards, LingoDrill, Placement, LingoFeedback, LingoFlash, LingoFlashcard, LingoPaneScreen, LingoPlacement, LingoQuestion, LingoView, LingoWelcome } from '../types'
 
 const PANE = 'lingo'
 
@@ -283,7 +283,9 @@ export const register: Register = (on, options) => {
     const Select = e.surface !== 'mobile' && 'Select' in elements ? (elements.Select as ElementConstructor<SelectProps>) : null
     // The card grid is a Client: drawn on the terminal and the desktop only
     // (VS Code lists one but draws an empty box in its place).
-    const Client = (e.surface === 'terminal' || e.surface === 'desktop') && 'Client' in elements ? elements.Client : null
+    // Whether this surface draws a Client. The Client itself is written plainly as h('Client', ...)
+    // where it is drawn, so the directory can read its module path (Riley, 2026-11-09).
+    const drawsClient = (e.surface === 'terminal' || e.surface === 'desktop') && 'Client' in elements
     const screen = await read($, paneScreen)
     // Rounded SVG bars where the surface draws Svg; the terminal keeps cell bars.
     // By surface, not by `'Svg' in elements`: the terminal's table answers that
@@ -298,8 +300,8 @@ export const register: Register = (on, options) => {
       return settingsPage($, Box, Button, Text, Select, await settingsNow($), e.props.scroll.bodyRows, dev, e.props.bodyColumns, e.surface === 'desktop')
     }
     if (screen === 'language') return languagePage($, Box, Button, Text)
-    if (screen === 'flashcards') return flashcardsPage($, Box, Button, Text, Select, Client, await read($, flash), e.props.scroll.bodyRows)
-    if (screen === 'placement') return placementPage($, Box, Button, Text, Client, await read($, placement), e.props.scroll.bodyRows)
+    if (screen === 'flashcards') return flashcardsPage($, Box, Button, Text, Select, drawsClient, await read($, flash), e.props.scroll.bodyRows)
+    if (screen === 'placement') return placementPage($, Box, Button, Text, drawsClient, await read($, placement), e.props.scroll.bodyRows)
     if (screen !== 'card') return chunkWords($, Box, Button, Text, screen.chunk, await chunksNow($))
     // First run: the language, then how to start, before any card.
     const step = await read($, welcome)
@@ -401,14 +403,14 @@ export const register: Register = (on, options) => {
             flexbox holds the middle at full height and pushes the footer off the pane, so the
             space above the word gives way first, and the pane scrolls only when the word,
             the cards and the footer cannot all fit. */}
-        {!menuOpen && <Box key="middle" flexDirection="column" flexGrow={1} flexShrink={1} minHeight={0} justifyContent={Client !== null ? 'flex-start' : 'center'}>
-          {Client !== null && <Box key="space-above" flexGrow={1} />}
-          {Client !== null && <Box key="tip-room" height={KEPT_ROWS} flexShrink={1} minHeight={0} />}
-          <Box key="word-row" justifyContent="center" marginTop={Client !== null ? 0 : 1} marginBottom={1}>
+        {!menuOpen && <Box key="middle" flexDirection="column" flexGrow={1} flexShrink={1} minHeight={0} justifyContent={drawsClient ? 'flex-start' : 'center'}>
+          {drawsClient && <Box key="space-above" flexGrow={1} />}
+          {drawsClient && <Box key="tip-room" height={KEPT_ROWS} flexShrink={1} minHeight={0} />}
+          <Box key="word-row" justifyContent="center" marginTop={drawsClient ? 0 : 1} marginBottom={1}>
             {wordBox}
           </Box>
-          {Client !== null ? (
-            <Client key="cards" module="./cards.tsx" props={cards} width="100%" height={GRID_ROWS} />
+          {drawsClient ? (
+            h('Client', { key: 'cards', module: './cards.tsx', props: cards, width: '100%', height: GRID_ROWS })
           ) : (
             // VS Code and mobile draw no Client: plain buttons, keys 1–4.
             <Box flexDirection="column" alignItems="center" rowGap={1}>
@@ -427,9 +429,9 @@ export const register: Register = (on, options) => {
               ))}
             </Box>
           )}
-          {Client !== null && <Box key="space-below" flexGrow={1} />}
+          {drawsClient && <Box key="space-below" flexGrow={1} />}
         </Box>}
-        {!menuOpen && Client === null && (
+        {!menuOpen && !drawsClient && (
           // Without the card grid there are no borders: say the result in words.
           <Box flexDirection="column" alignItems="center" marginY={1}>
             {line(Text, q, fb)}
@@ -498,7 +500,9 @@ export const register: Register = (on, options) => {
     const step = await read($, welcome)
     if (step !== 'done' && !(await isSetUp($))) return welcomePage($, Box, Button, Text, step, 'band')
     // The card row is a Client, as in the pane: terminal and desktop only.
-    const Client = (e.surface === 'terminal' || e.surface === 'desktop') && 'Client' in elements ? elements.Client : null
+    // Whether this surface draws a Client. The Client itself is written plainly as h('Client', ...)
+    // where it is drawn, so the directory can read its module path (Riley, 2026-11-09).
+    const drawsClient = (e.surface === 'terminal' || e.surface === 'desktop') && 'Client' in elements
     const fb = await read($, feedback)
     const revealed = await read($, isRevealed)
     const drilling = await read($, drill)
@@ -547,9 +551,9 @@ export const register: Register = (on, options) => {
             <Button key="close" label="×" role="dismiss" onPress={() => closeBand($)} />
           </Box>
         </Box>
-        {Client !== null ? (
+        {drawsClient ? (
           <Box key="cards-row" marginTop={1}>
-            <Client key="cards" module="./cards.tsx" props={cards} width="100%" height={BAND_ROWS} />
+            {h('Client', { key: 'cards', module: './cards.tsx', props: cards, width: '100%', height: BAND_ROWS })}
           </Box>
         ) : (
           // VS Code and mobile draw no Client: plain buttons, keys 1–4, the result in words.
@@ -2100,7 +2104,7 @@ async function placementPage(
   Box: ElementConstructor<BoxProps>,
   Button: ElementConstructor<ButtonProps>,
   Text: ElementConstructor<TextProps>,
-  Client: ElementConstructor<ClientProps> | null,
+  drawsClient: boolean, // the terminal and the desktop draw a Client
   p: LingoPlacement | null,
   bodyRows: number,
 ) {
@@ -2131,8 +2135,8 @@ async function placementPage(
           <Text bold>{q.prompt}</Text>
           {posTag(Box, Text, q.pos)}
         </Box>
-        {Client !== null ? (
-          <Client key="place-cards" module="./cards.tsx" props={cards} width="100%" height={GRID_ROWS} />
+        {drawsClient ? (
+          h('Client', { key: 'place-cards', module: './cards.tsx', props: cards, width: '100%', height: GRID_ROWS })
         ) : (
           <Box flexDirection="column" alignItems="center" rowGap={1}>
             {[0, 2].map(row => (
@@ -2246,7 +2250,7 @@ function flashcardsPage(
   Button: ElementConstructor<ButtonProps>,
   Text: ElementConstructor<TextProps>,
   Select: ElementConstructor<SelectProps> | null,
-  Client: ElementConstructor<ClientProps> | null,
+  drawsClient: boolean, // the terminal and the desktop draw a Client
   f: LingoFlash | null,
   bodyRows: number,
 ) {
@@ -2296,11 +2300,11 @@ function flashcardsPage(
         </Box>
       )}
       <Box key="flash-middle" flexDirection="column" flexGrow={1} flexShrink={1} minHeight={0} justifyContent="center" marginTop={1}>
-        {Client !== null ? (
+        {drawsClient ? (
           // In a box that does not shrink: a Client takes no flexShrink, and the centred middle
           // squeezed it to one row in the desktop app (Riley's screenshot, 2026-10-26).
           <Box key="flash-card-box" height={FLASH_ROWS} flexShrink={0}>
-            <Client key="flash-card" module="./flashcard.tsx" props={card} width="100%" height={FLASH_ROWS} />
+            {h('Client', { key: 'flash-card', module: './flashcard.tsx', props: card, width: '100%', height: FLASH_ROWS })}
           </Box>
         ) : (
           // VS Code draws no Client: the card is a button.
