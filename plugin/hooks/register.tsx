@@ -935,7 +935,14 @@ async function checkBadges($: EngineInterface, now: number) {
 // Every language's saved words, with its code: the shared badges and Stats' "All languages".
 async function allCards($: EngineInterface): Promise<{ code: string; cards: ReturnType<typeof readCards> }[]> {
   const keys = (await $.store.keys()).filter(k => k.startsWith('cards:')).sort()
-  return Promise.all(keys.map(async k => ({ code: k.slice('cards:'.length), cards: readCards(await $.store.get(k)) })))
+  // A plain loop: each $.store.get a plain call in this function's own body, not inside an arrow
+  // in a map, which the directory could not read as a plain call (Riley, 2026-11-09).
+  const out: { code: string; cards: ReturnType<typeof readCards> }[] = []
+  for (const k of keys) {
+    const stored = await $.store.get(k)
+    out.push({ code: k.slice('cards:'.length), cards: readCards(stored) })
+  }
+  return out
 }
 
 // Adds an answer to today's log (local date), and when today reaches the daily goal,

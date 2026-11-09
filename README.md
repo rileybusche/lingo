@@ -104,6 +104,41 @@ At the top right of the pane:
 | **Settings** | Your own limits (new words a day, the daily goal, what opens the next chunk, target recall), sounds, the voice that says the word, and whole-deck mode |
 | **Switch to band view** | Moves the card to the band above the prompt |
 
+## Examples
+
+1. **Learn while Claude works.** Ask Claude anything, say "explain this function". A card comes up
+   while it works: click an answer, or press 1–4. Press 🔊 to hear the word.
+2. **Check your progress.** Type `/lingo-stats`: your daily streak, level and accuracy, and the
+   Stats page with the last 30 days and the words you miss most. Press **drill these** to practise them.
+3. **Study a chunk with flashcards.** ⚙️ Menu → **Flashcards**, pick a chunk from the dropdown, and
+   click the card to turn it to its English.
+4. **Move to another computer.** Type `/lingo-export`, copy `lingo-progress.json` across, and on
+   the other computer type `/lingo-import /full/path/to/lingo-progress.json`.
+
+## Troubleshooting
+
+| What you see | What to do |
+| --- | --- |
+| `command not found` when installing | The `claude` command is not installed: see [Installing](#installing). |
+| No card comes up | Run `/lingo`. The switch at the top left of the pane (in the band, the one before **move to pane**) must be **● on** for a card on every turn. |
+| A new version did nothing | Run `/reload-plugins`, or start a new session. |
+| A toast says a voice isn't installed | Your system's own voice says the word instead. To get the named voice on a Mac: System Settings → Accessibility → Spoken Content → System voice → Manage Voices. |
+| No 🔊 | Speech isn't available on this computer, so 🔊 and the voice switch are hidden. |
+| Plain buttons instead of cards | VS Code and the mobile app draw no card grid; the answers are buttons there, and work the same. |
+| `/lingo-import` says it could not read the file | Give the file's full path, without `~`. |
+
+## Privacy
+
+Lingo keeps your progress on your computer, in Claude Code's own storage for plugins. It makes no
+network requests, sends nothing anywhere, and never reads your conversation: it only notices when
+Claude starts and stops working. The one file it writes is `lingo-progress.json`, when you run
+`/lingo-export`.
+
+## Support
+
+Report a problem or ask a question in this repository's
+[Issues](https://github.com/rileybusche/lingo/issues).
+
 ## Credits and licences
 
 - The code is MIT: [LICENSE](LICENSE).
