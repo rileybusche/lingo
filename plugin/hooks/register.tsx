@@ -50,7 +50,7 @@ const isAwaiting = atom({ plugin: 'lingo', key: 'isAwaiting' } as const, false)
 // goes (unless a turn, a waiting card or the person keeps it up).
 const RESULT_MS = 4000
 const isShowingResult = atom({ plugin: 'lingo', key: 'isShowingResult' } as const, false)
-const resultToken = atom({ plugin: 'lingo', key: 'resultToken' } as const, 0)
+const resultAt = atom({ plugin: 'lingo', key: 'resultAt' } as const, 0)
 // The switch: on, a card comes up every time Claude starts working; off, only
 // with /lingo. Saved in the store's profile, so it holds across sessions.
 const autoShow = atom({ plugin: 'lingo', key: 'autoShow' } as const, true)
@@ -757,8 +757,8 @@ async function askAnother($: EngineInterface) {
 }
 
 // The result's time is up, unless a newer answer has started its own.
-async function hideResult($: EngineInterface, token: number) {
-  if ((await read($, resultToken)) === token) await update($, isShowingResult, () => false)
+async function hideResult($: EngineInterface, answeredAt: number) {
+  if ((await read($, resultAt)) === answeredAt) await update($, isShowingResult, () => false)
 }
 
 // Records a pick once per card: the first press counts, later ones do nothing.
@@ -773,7 +773,7 @@ async function answer($: EngineInterface, picked: number) {
   const now = await $.clock.now()
   // Keep the result up for RESULT_MS; a later answer's own timer takes over.
   await update($, isShowingResult, () => true)
-  await update($, resultToken, () => now)
+  await update($, resultAt, () => now)
   $.clock.after(RESULT_MS, () => void hideResult($, now))
   const key = cardsKey(deck.language)
   const wasNew = srsOf(readCards(await $.store.get(key))[q.wordId], now).state === 'new'
@@ -989,7 +989,7 @@ async function refresh($: EngineInterface) {
 // lingo-progress.json in the folder the session runs in. A fixed name (Riley, 2026-11-09): a
 // path typed by the person could name a start-up or settings file (`~/.zshrc`) and replace it,
 // and the directory's verifier holds a mod that writes a path it cannot read off the source.
-// No HOME read either: an environment read is held as a possible credential.
+// No HOME read either: the verifier holds any environment read for review.
 const EXPORT_FILE = 'lingo-progress.json'
 async function exportProgress($: EngineInterface, args: string): Promise<string> {
   if (args !== '') return `/lingo-export takes no file name: it always writes ${EXPORT_FILE} in this session's folder. Run it on its own.`

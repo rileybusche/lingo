@@ -1,6 +1,6 @@
 {
   "name": "lingo",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Spaced-repetition vocab cards while Claude works: the 1,000 most common words of Spanish, French, Italian or Brazilian Portuguese.",
   "author": {
     "name": "Riley Busche"

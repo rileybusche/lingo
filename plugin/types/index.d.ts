@@ -68,7 +68,7 @@ declare module 'claude-code' {
       isTurnActive: boolean // a turn is running and brought up a card
       isAwaiting: boolean // a turn's card is still unanswered
       isShowingResult: boolean // an answer's result stays up RESULT_MS before the band goes
-      resultToken: number // which answer the pending hide belongs to
+      resultAt: number // when the answer whose result shows was made: which one the pending hide belongs to
       autoShow: boolean // the switch: a card on every turn (saved in profile.autoShow)
       lastReminder: number // when the "switch is off" toast last showed (epoch ms; 0 = not yet)
       view: LingoView
