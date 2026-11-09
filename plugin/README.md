@@ -87,8 +87,8 @@ beginning or take a 20-question placement test that finds where to start.
 | `/lingo-stats` | Your daily streak, level, the last 30 days, accuracy and the words you miss most; opens the Stats page |
 | `/lingo-chunk` | Which chunk of 50 words you are on and how many you have learned; opens Word Chunks |
 | `/lingo-view pane`, `/lingo-view band` | Chooses the side pane or the band above the prompt |
-| `/lingo-export [file]` | Saves your progress, every language's, to a file (`~/lingo-progress-<date>.json` by default) |
-| `/lingo-import <file>` | Loads progress from a file, merged with what is saved |
+| `/lingo-export` | Saves your progress, every language's, to `lingo-progress.json` in the folder the session runs in (always that name; move it from there) |
+| `/lingo-import [file]` | Loads progress, merged with what is saved: `lingo-progress.json` in the session's folder, or the file you name by its full path |
 
 ## The ⚙️ Menu
 

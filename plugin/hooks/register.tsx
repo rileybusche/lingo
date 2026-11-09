@@ -21,7 +21,8 @@ import { POS_HELP, posName, posTipText } from '../src/pos'
 import { BAND_ROWS } from './cards'
 import { cardsKey, isKnown, migratedProfile, ratingFor, readCards, readStats, srsOf, totals, withAnswer, withStreak, withStudied } from '../src/progress'
 import { RUN_FOR_BONUS, type Level, levelOf, localDate, msToMidnight, readDays, streakNow, withDay, withDayCounted, xpFor } from '../src/gamify'
-import { defaultExportPath, expandHome, exportText, importWrites, isOurKey } from '../src/transfer'
+import { chimeBase64 } from '../src/chime'
+import { exportText, importWrites, isOurKey } from '../src/transfer'
 import { seeded, shuffled } from '../src/random'
 import { QUESTIONS, SPREAD_DAYS, placedCount, questionNumber, startPlacement, withPlacement, withPlacementAnswer, type Placement } from '../src/placement'
 import { verdictText } from '../src/verdict'
@@ -137,13 +138,12 @@ export const register: Register = (on, options) => {
     })
     await $.command.register({
       name: 'lingo-export',
-      description: 'Save your progress to a file (default ~/lingo-progress-<date>.json)',
-      argumentHint: '[file]',
+      description: "Save your progress to lingo-progress.json in this session's folder",
     })
     await $.command.register({
       name: 'lingo-import',
-      description: 'Load progress from a file, merged with what is saved',
-      argumentHint: '<file>',
+      description: "Load progress, merged with what is saved: lingo-progress.json in this session's folder, or the file you name",
+      argumentHint: '[file]',
     })
     await $.command.register({
       name: 'lingo-view',
@@ -840,15 +840,14 @@ function sayButton($: EngineInterface, Box: ElementConstructor<BoxProps>, Button
   )
 }
 
-const LEVEL_UP_SOUND = 'sounds/levelup.wav'
 
-// A new level reached: its toast, and the chime (sounds/levelup.wav, made by
-// scripts/make-chime.mjs) unless turned off.
+// A new level reached: its toast, and the chime (src/chime.ts, made as it plays) unless
+// turned off.
 async function announceLevel($: EngineInterface, wasXp: number, isXp: number) {
   const is = levelOf(isXp).level
   if (is <= levelOf(wasXp).level) return
   $.ui.toast(`Level ${is}! ${isXp} XP so far.`, { timeoutMs: 6000 })
-  if ((await settingsNow($)).sounds) void $.audio.play({ asset: LEVEL_UP_SOUND }).catch(() => undefined)
+  if ((await settingsNow($)).sounds) void $.audio.play({ base64: chimeBase64(), mime: 'audio/wav' }).catch(() => undefined)
 }
 
 // Developer mode's Show first run: the first-run screen on the card, as a new person sees
@@ -986,27 +985,33 @@ async function refresh($: EngineInterface) {
   await showStreak($, await $.clock.now())
 }
 
-// /lingo-export [file]: the profile, streak and every word's record, as JSON.
-async function exportProgress($: EngineInterface, file: string): Promise<string> {
-  const home = await $.env.get('HOME')
+// /lingo-export: the profile, streak and every word's record, as JSON, always to
+// lingo-progress.json in the folder the session runs in. A fixed name (Riley, 2026-11-09): a
+// path typed by the person could name a start-up or settings file (`~/.zshrc`) and replace it,
+// and the directory's verifier holds a mod that writes a path it cannot read off the source.
+// No HOME read either: an environment read is held as a possible credential.
+const EXPORT_FILE = 'lingo-progress.json'
+async function exportProgress($: EngineInterface, args: string): Promise<string> {
+  if (args !== '') return `/lingo-export takes no file name: it always writes ${EXPORT_FILE} in this session's folder. Run it on its own.`
   const now = await $.clock.now()
-  const path = file === '' ? defaultExportPath(home, now) : expandHome(file, home)
   const store: Record<string, unknown> = {}
   for (const key of (await $.store.keys()).filter(isOurKey)) store[key] = await $.store.get(key)
+  const folder = await $.session.cwd()
   try {
-    await $.fs.write(path, exportText(store, now))
+    await $.fs.write('lingo-progress.json', exportText(store, now))
   } catch (err) {
-    return `Could not write ${path}: ${err instanceof Error ? err.message : String(err)}`
+    return `Could not write ${EXPORT_FILE} in ${folder}: ${err instanceof Error ? err.message : String(err)}`
   }
   const { correct, answered } = totals(store[cardsKey(deck.language)])
 
-  return `Exported ${answered} answers (${correct} correct) to ${path}. Import it with /lingo-import ${path}`
+  return `Exported ${answered} answers (${correct} correct) to ${EXPORT_FILE} in ${folder}. Import it with /lingo-import, in a session in that folder, or /lingo-import <full path to the file>.`
 }
 
-// /lingo-import <file>: merged into what is saved, never losing an answer.
+// /lingo-import [file]: merged into what is saved, never losing an answer. lingo-progress.json
+// in the session's folder, or the file named (a full path, or one relative to that folder).
 async function importProgress($: EngineInterface, file: string): Promise<string> {
-  if (file === '') return 'Name the file: /lingo-import <file>'
-  const path = expandHome(file, await $.env.get('HOME'))
+  if (file.startsWith('~')) return 'Give the full path, without ~ (for example /Users/you/lingo-progress.json).'
+  const path = file === '' ? EXPORT_FILE : file
   let text: string
   try {
     text = String(await $.fs.read(path))

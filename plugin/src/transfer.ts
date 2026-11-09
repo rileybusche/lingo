@@ -101,14 +101,3 @@ export function importWrites(store: Record<string, unknown>, text: string): Impo
 
   return { ok: true, writes, added, updated }
 }
-
-// `~/x` under the home folder; anything else as given.
-export function expandHome(path: string, home: string | undefined): string {
-  if (home === undefined || !(path === '~' || path.startsWith('~/'))) return path
-  return home + path.slice(1)
-}
-
-export function defaultExportPath(home: string | undefined, now: number): string {
-  const day = new Date(now).toISOString().slice(0, 10)
-  return expandHome(`~/lingo-progress-${day}.json`, home)
-}
