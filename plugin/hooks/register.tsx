@@ -314,6 +314,8 @@ export const register: Register = (on, options) => {
     const drilling = await read($, drill)
     const run = await read($, streak)
     await read($, dayTick) // redraw at local midnight
+    await read($, settingsTick) // redraw when the voice switch turns
+    const sayOn = (await settingsNow($)).sayOnShow
     const saved = readStats(await $.store.get('stats'))
     const xpNow = saved.xp
     const clockNow = await $.clock.now()
@@ -441,6 +443,9 @@ export const register: Register = (on, options) => {
             <Box key="daily"><Text>{`🔥 ${dailyNow}`}</Text></Box>
             {xpLine(Box, Text, xpNow, run)}
           </Box>
+          {/* Bottom right, the voice switch (Riley, 2026-11-08): "Say the word when shown",
+              one click from the card. Hidden with the 🔊 when there is no speech. */}
+          {saying !== 'none' && voiceSwitch($, Box, Button, Text, sayOn)}
         </Box>
       </Box>
     )
@@ -499,6 +504,8 @@ export const register: Register = (on, options) => {
     const drilling = await read($, drill)
     const isOn = await read($, autoShow)
     const saying = await read($, speech)
+    await read($, settingsTick) // redraw when the voice switch turns
+    const sayOn = (await settingsNow($)).sayOnShow
     const word = (
       <Box key="word" minWidth={BAND_WORD_COLUMNS}>
         {wordText(Text, q)}
@@ -516,53 +523,54 @@ export const register: Register = (on, options) => {
       correct: fb === null ? null : q.answer,
       picked: fb === null ? null : fb.picked,
       verdict: fb === null ? '' : verdictText(deck.language, fb.isCorrect),
-      layout: 'row',
+      // The desktop's own band (Riley, 2026-11-08): the cards fill the width, "next" under them.
+      layout: e.surface === 'desktop' ? 'row-wide' : 'row',
     }
+    const isDesktop = e.surface === 'desktop'
+    // Between the top line's controls on the desktop: a dim dot, so the two switches read apart.
+    const dot = (key: string) => (isDesktop ? <Box key={key}><Text dimColor>·</Text></Box> : null)
 
+    // Two rows (Riley, 2026-11-08): the word on the left and every control on the right of the
+    // top line, so nothing is clipped at the band's edge; then the four cards across the full
+    // width, two lines of text tall, "next" after them and the result under them.
     return (
-      <Box width="100%" justifyContent="space-between" alignItems="stretch">
+      <Box width="100%" flexDirection="column">
+        <Box key="band-top" justifyContent="space-between" flexWrap="wrap">
+          {word}
+          {/* × hides the band until the next turn (or /lingo when the switch is off). */}
+          <Box key="top-right" gap={2}>
+            {saying !== 'none' && voiceSwitch($, Box, Button, Text, sayOn, 'below')}
+            {saying !== 'none' && dot('dot-voice')}
+            {autoSwitch($, Box, Button, Text, isOn, 'right', isDesktop ? 'lingo' : undefined)}
+            {dot('dot-auto')}
+            <Button key="to-pane" label="move to pane" plain onPress={() => choose($, 'pane')} />
+            <Button key="close" label="×" role="dismiss" onPress={() => closeBand($)} />
+          </Box>
+        </Box>
         {Client !== null ? (
-          // The word, then four equal bordered cards, "next" to their right
-          // once answered, the result under them.
-          <Box key="left" gap={2} flexGrow={1}>
-            <Box marginTop={1}>{word}</Box>
-            <Client key="cards" module="./cards.tsx" props={cards} flexGrow={1} height={BAND_ROWS} />
+          <Box key="cards-row" marginTop={1}>
+            <Client key="cards" module="./cards.tsx" props={cards} width="100%" height={BAND_ROWS} />
           </Box>
         ) : (
-        <Box flexDirection="column">
-          <Box gap={1}>
-            {word}
-            {q.choices.map((choice, i) => (
-              <Button
-                key={`a${i + 1}`}
-                label={choice}
-                hotkey={String(i + 1)}
-                variant={fb !== null && i === q.answer ? 'primary' : undefined}
-                onPress={() => answer($, i)}
-              />
-            ))}
+          // VS Code and mobile draw no Client: plain buttons, keys 1–4, the result in words.
+          <Box flexDirection="column" marginTop={1}>
+            <Box gap={1} flexWrap="wrap">
+              {q.choices.map((choice, i) => (
+                <Button
+                  key={`a${i + 1}`}
+                  label={choice}
+                  hotkey={String(i + 1)}
+                  variant={fb !== null && i === q.answer ? 'primary' : undefined}
+                  onPress={() => answer($, i)}
+                />
+              ))}
+            </Box>
+            <Box gap={1}>
+              {line(Text, q, fb)}
+              {fb !== null && <Button key="next" label="next" variant="primary" onPress={() => askAnother($)} />}
+            </Box>
           </Box>
-          <Box gap={1}>
-            {line(Text, q, fb)}
-            {fb !== null && <Button key="next" label="next" variant="primary" onPress={() => askAnother($)} />}
-          </Box>
-        </Box>
         )}
-        {/* Right column, as tall as the card: the switch and × at the top (×
-            hides the band until the next turn, or /lingo when the switch is
-            off), "move to pane" at the bottom. */}
-        <Box flexDirection="column" justifyContent="space-between" alignItems="flex-end">
-          <Box key="top-right" gap={1}>
-            {autoSwitch($, Box, Button, Text, isOn, 'right')}
-            <Button
-              key="close"
-              label="×"
-              role="dismiss"
-              onPress={() => closeBand($)}
-            />
-          </Box>
-          <Button key="to-pane" label="move to pane" plain onPress={() => choose($, 'pane')} />
-        </Box>
       </Box>
     )
   })
@@ -1850,13 +1858,15 @@ function autoSwitch(
   Text: ElementConstructor<TextProps>,
   isOn: boolean,
   side: 'left' | 'right',
+  name?: string, // shown before the switch (the desktop band's "lingo", beside the voice switch)
 ) {
   const scope = 'lingo-tip-auto'
   const label = isOn
     ? 'On: opens every time Claude starts working. Closing it hides it until the next turn.'
     : 'Off: stays closed until you run /lingo.'
   return (
-    <Box key="auto-switch">
+    <Box key="auto-switch" gap={1}>
+      {name !== undefined && <Text>{name}</Text>}
       <Button
         key="auto"
         label={isOn ? '● on' : '○ off'}
@@ -1878,6 +1888,39 @@ function autoSwitch(
         backgroundColor={TIP.background}
       >
         <Text color={TIP.text}>{label}</Text>
+      </Box>
+    </Box>
+  )
+}
+
+// The voice switch, bottom right of the pane and on the band's top line: "🔊 voice" and a switch drawn like the top left's
+// (Riley, 2026-11-08). It turns "Say the word when shown"; its tip opens above it, inside the pane.
+function voiceSwitch(
+  $: EngineInterface,
+  Box: ElementConstructor<BoxProps>,
+  Button: ElementConstructor<ButtonProps>,
+  Text: ElementConstructor<TextProps>,
+  isOn: boolean,
+  tipOpens: 'above' | 'below' = 'above', // above in the pane's footer, below on the band's top line
+) {
+  const scope = 'lingo-tip-voice'
+  return (
+    <Box key="voice-switch" gap={1}>
+      <Text>🔊 voice</Text>
+      <Button key="say-switch" label={isOn ? '● on' : '○ off'} plain hover={{ scope, underline: true }} onPress={() => pressChoice($, 'sayOnShow')} />
+      <Box
+        key="tip-voice-label"
+        position="absolute"
+        {...(tipOpens === 'above' ? { bottom: 1 } : { top: 1 })}
+        right={0}
+        width={36}
+        display="none"
+        hover={{ scope, display: 'flex' }}
+        borderStyle="round"
+        paddingX={1}
+        backgroundColor={TIP.background}
+      >
+        <Text color={TIP.text}>{isOn ? 'On: each new word is said aloud as it comes up.' : 'Off: words are said only when you press 🔊.'}</Text>
       </Box>
     </Box>
   )

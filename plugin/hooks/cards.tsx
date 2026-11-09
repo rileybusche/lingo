@@ -17,24 +17,27 @@ export const NEXT_ROWS = 3
 // The result's row under the "next" card, after a VERDICT_GAP-row gap.
 export const VERDICT_GAP = 1
 export const VERDICT_ROWS = 1
-// The band's row: cards ROW_CARD_ROWS tall, the result on the row under them,
-// "next" NEXT_COLS wide after the fourth card.
-export const ROW_CARD_ROWS = 3
+// The band's row: cards ROW_CARD_ROWS tall (two lines of text, so an answer like "that
+// (linking, no accent)" stays inside its card), the result on the row under them, "next"
+// NEXT_COLS wide after the fourth card.
+export const ROW_CARD_ROWS = 4
 export const NEXT_COLS = 10
 export const BAND_ROWS = ROW_CARD_ROWS + VERDICT_ROWS
 
-export type Layout = 'grid' | 'row'
+export type Layout = 'grid' | 'row' | 'row-wide'
 
-// The width of each of the row's four cards.
-function rowCardWidth(columns: number) {
+// The width of each of the row's four cards: the terminal's leaves room for "next" after the
+// fourth; the desktop's (row-wide) fills the width, "next" going under the cards.
+function rowCardWidth(columns: number, layout: Layout = 'row') {
+  if (layout === 'row-wide') return Math.max(1, Math.floor((columns - 3 * GAP_X) / 4))
   return Math.max(1, Math.floor((columns - 4 * GAP_X - NEXT_COLS) / 4))
 }
 
 // Which card a cell of the region belongs to, or null for the gaps.
 export function cardAt(columns: number, rows: number, x: number, y: number, layout: Layout = 'grid'): number | null {
-  if (layout === 'row') {
+  if (layout === 'row' || layout === 'row-wide') {
     if (y < 0 || y >= ROW_CARD_ROWS) return null
-    const width = rowCardWidth(columns)
+    const width = rowCardWidth(columns, layout)
     for (let i = 0; i < 4; i++) {
       const left = i * (width + GAP_X)
       if (x >= left && x < left + width) return i
@@ -56,6 +59,8 @@ function cardSize(columns: number, rows: number) {
 
 // Whether a cell of the region is on the "next" card.
 export function isNextAt(columns: number, rows: number, x: number, y: number, layout: Layout = 'grid'): boolean {
+  // The desktop band's "next": the right end of the result's row, under the fourth card.
+  if (layout === 'row-wide') return y === ROW_CARD_ROWS && x >= columns - NEXT_COLS && x < columns
   if (layout === 'row') {
     const left = 4 * (rowCardWidth(columns) + GAP_X)
     return y >= 0 && y < ROW_CARD_ROWS && x >= left && x < left + NEXT_COLS
@@ -117,6 +122,29 @@ const Cards: ClientModule<LingoCards> = (props, surface) => {
       )}
     </Box>
   )
+
+  if (layout === 'row-wide') {
+    const width = rowCardWidth(surface.columns, layout)
+    return (
+      <Box flexDirection="column">
+        <Box columnGap={GAP_X}>
+          {card(0, width, ROW_CARD_ROWS)}
+          {card(1, width, ROW_CARD_ROWS)}
+          {card(2, width, ROW_CARD_ROWS)}
+          {card(3, width, ROW_CARD_ROWS)}
+        </Box>
+        {/* The result on the left, "next →" on the right of the same row. */}
+        <Box key="below" justifyContent="space-between" height={VERDICT_ROWS}>
+          {verdict({ paddingLeft: 1 })}
+          {isAnswered && (
+            <Box key="next-card" width={NEXT_COLS} justifyContent="flex-end">
+              <Button key="next" label="next →" plain onPress={() => surface.post({ next: true })} />
+            </Box>
+          )}
+        </Box>
+      </Box>
+    )
+  }
 
   if (layout === 'row') {
     const width = rowCardWidth(surface.columns)

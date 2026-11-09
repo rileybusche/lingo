@@ -37,15 +37,24 @@ system's voice says the word instead.
 
 ## Installing
 
-At the prompt of a Claude Code terminal session:
+In Claude Code (the desktop app's Code tab, or a terminal session), type this at the prompt,
+starting with `!`:
 
 ```
-/plugin install lingo --marketplace rileybusche/lingo
+! claude plugin install lingo --marketplace https://github.com/rileybusche/lingo.git --config showOnTurn=true
 ```
 
-Answer `y` to add the marketplace, then choose the **user** scope so it loads in every session,
-and set "Show on turn" (on by default). Installed from a terminal, it also loads in the desktop
-app's Code tab, which cannot run the command itself.
+The `!` runs it as a shell command. It adds the lingo marketplace and installs Lingo for every
+session; start a new session and it is there.
+
+It needs the `claude` command. If the reply is "command not found", install it once from a
+terminal (Terminal.app on a Mac):
+
+```
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+Then restart Claude Code and run the line above again.
 
 The first time it opens, it asks which language you want to learn, then whether to start from the
 beginning or take a 20-question placement test that finds where to start.

@@ -54,7 +54,7 @@ export type LingoCards = {
   correct: number | null
   picked: number | null
   verdict: string // "correcto"/"incorrecto" after an answer, "" before
-  layout?: 'grid' | 'row' // the pane's 2 × 2 grid (default) or the band's row
+  layout?: 'grid' | 'row' | 'row-wide' // the pane's 2 × 2 grid (default), the terminal band's row, or the desktop band's (cards the full width, "next" under them)
 }
 
 declare module 'claude-code' {
